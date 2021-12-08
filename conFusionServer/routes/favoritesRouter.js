@@ -29,7 +29,11 @@ favoriteRouter.route('/')
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(favorite);
-    }, (err) => next(err))
+    }, (err) =>{
+        err = new Error('Duplicate favorite dish found');//model of favorites
+        err.status = 404;
+        return next(err);
+        } )
     .catch((err) => next(err));
 })
 .put(cors.corsWithOptions,authenticate.verifyUser,(req, res, next) => {
@@ -48,8 +52,8 @@ favoriteRouter.route('/')
 
 favoriteRouter.route('/:dishId')
 .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-.get(cors.cors,(req,res,next) => {
-    Favorites.findById(req.params.dishId)
+.get(cors.cors,authenticate.verifyUser,(req,res,next) => {
+    Favorites.find({user:req.user._id,dish:req.params.dishId})
     .populate('user').populate('dish')
     .then((dish) => {
         res.statusCode = 200;
@@ -59,13 +63,17 @@ favoriteRouter.route('/:dishId')
     .catch((err) => next(err));
 })
 .post(cors.corsWithOptions,authenticate.verifyUser,(req, res, next) => {
-    Favorites.create(req.params.dishId)
+    Favorites.create({user:req.user._id,dish:req.params.dishId})
     .then((favorite) => {
         console.log('Favorite Dish Created ', favorite);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(favorite);
-    }, (err) => next(err))
+    }, (err) => {
+        err = new Error('Duplicate favorite dish found');//model of favorites
+        err.status = 404;
+        return next(err);
+        })
     .catch((err) => next(err));
 })
 .put(cors.corsWithOptions,authenticate.verifyUser,(req, res, next) => {
@@ -73,7 +81,7 @@ favoriteRouter.route('/:dishId')
     res.end('PUT operation not supported on /favorites/'+req.params.dishId);
 })
 .delete(cors.corsWithOptions,authenticate.verifyUser,(req, res, next) => {
-    Favorites.findByIdAndRemove(req.params.dishId)
+    Favorites.find({user:req.user._id,dish:req.params.dishId}).remove()
     .then((resp) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');

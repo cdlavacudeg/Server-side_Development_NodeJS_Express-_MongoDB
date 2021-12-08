@@ -15,6 +15,7 @@ var favoriteSchema=new Schema({
     timestamps: true
 });
 
+favoriteSchema.index({user:1,dish:1},{unique:true});
 var Favorites = mongoose.model('Favorite', favoriteSchema);
 
 module.exports = Favorites;
